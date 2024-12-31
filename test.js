@@ -1,56 +1,42 @@
 const puppeteer = require('puppeteer');
 
-(async () => {
-  // Launch browser in non-headless mode with slow motion enabled
-  const browser = await puppeteer.launch({
-    headless: false, // Run with browser UI
-    slowMo: 2000, // Adds a 100ms delay to every action
-    defaultViewport: null, // Use full screen
-  });
-  const page = await browser.newPage();
+const formUrl = 'https://docs.google.com/forms/d/e/1FAIpQLSfB6EbJiLaQdLC3-DOA_P5dd2H6ncFf6T_ecaxjQ6kzBN8R3A/viewform';
 
-  // Navigate to the Google Form
-  const formURL = 'https://docs.google.com/forms/d/e/1FAIpQLSfB6EbJiLaQdLC3-DOA_P5dd2H6ncFf6T_ecaxjQ6kzBN8R3A/viewform';
-  await page.goto(formURL, { waitUntil: 'networkidle2' });
+async function fillForm() {
+    const browser = await puppeteer.launch({ headless: false }); // Set to false for debugging
+    const page = await browser.newPage();
+    
+    await page.goto(formUrl);
 
-  console.log('Page loaded successfully.');
+    // Wait for the form to load
+    await page.waitForSelector('form');
 
-  // Function to select random radio buttons
-  const selectRandomRadioButtons = async () => {
-    // Find all groups of radio buttons
-    const radioGroups = await page.$$('.freebirdFormviewerComponentsQuestionRadioChoice');
+    // Select all radio button containers for the "What is your age?" question
+    const radioButtonGroups = await page.$$('[role="radiogroup"]');
 
-    for (const group of radioGroups) {
-      const radios = await group.$$('div[role="radio"]'); // Get all radio buttons in the group
-      if (radios.length > 0) {
-        const randomIndex = Math.floor(Math.random() * radios.length); // Select a random index
-        await radios[randomIndex].click(); // Click the random radio button
-        console.log(`Clicked radio button in group: ${randomIndex}`);
-      }
-      // Add a delay between each radio button selection
-      await page.waitForTimeout(500); // 500ms delay
+    for (const group of radioButtonGroups) {
+        const options = await group.$$('div[role="radio"]'); // Select all the radio button options
+
+        if (options.length > 0) {
+            // Choose a random radio button from the available options
+            const randomIndex = Math.floor(Math.random() * options.length);
+            await options[randomIndex].click();
+        }
     }
-  };
 
-  // Select random radio buttons in the form
-  await selectRandomRadioButtons();
-  console.log('Random radio buttons selected.');
+    // Submit the form after filling it out
+    const submitButton = await page.$('div[role="button"][aria-label="Submit"]');
+    if (submitButton) {
+        await submitButton.click();
+    }
 
-  // Add a delay before submitting
-  await page.waitForTimeout(1000); // 1-second delay
+    // Wait for the form to be submitted and the response page to load
+    await page.waitForNavigation();
 
-  // Click the submit button
-  const submitButton = await page.$('div[role="button"][aria-label="Submit"]');
-  if (submitButton) {
-    await submitButton.click();
     console.log('Form submitted successfully!');
-  } else {
-    console.error('Submit button not found.');
-  }
 
-  // Wait to observe the results
-  await page.waitForTimeout(3000); // 3-second delay
+    // Close the browser
+    await browser.close();
+}
 
-  // Close the browser
-//   await browser.close();
-})();
+fillForm().catch(console.error);
