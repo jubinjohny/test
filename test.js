@@ -1,6 +1,6 @@
 const puppeteer = require('puppeteer');
 
-const formUrl = 'https://docs.google.com/forms/d/e/1FAIpQLSfB6EbJiLaQdLC3-DOA_P5dd2H6ncFf6T_ecaxjQ6kzBN8R3A/viewform';
+const formUrl = 'https://docs.google.com/forms/';
 
 async function fillForm() {
     const browser = await puppeteer.launch({ headless: false }); // Set to false for debugging
